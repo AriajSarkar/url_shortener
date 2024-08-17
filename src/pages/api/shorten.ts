@@ -13,12 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const origin = req.headers.origin;
     const referer = req.headers.referer;
 
-    // Allow only requests from the same site
-    if (origin && !origin.endsWith(req.headers.host as string)) {
+    if (!origin || !origin.endsWith(req.headers.host as string)) {
         return res.status(403).json({ message: 'Forbidden: Cross-site requests are not allowed' });
     }
 
-    if (referer && !referer.startsWith(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`)) {
+    if (!referer || !referer.startsWith(`${req.headers['x-forwarded-proto'] || 'http'}://${req.headers.host}`)) {
         return res.status(403).json({ message: 'Forbidden: Cross-site requests are not allowed' });
     }
 
