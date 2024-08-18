@@ -2,49 +2,13 @@ import validator from 'validator';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectToDatabase } from '@/lib/db';
 import { generateShortUrl } from '@/lib/generateShortUrl';
-import Cors from 'cors';
-
-const allowedOrigins = (process.env.ALLOWED_ORIGIN || '').split(',');
-
-// Initialize CORS middleware with configuration
-const cors = Cors({
-    origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, origin);
-        } else {
-            callback(new Error('Internal Server Error'));
-        }
-    },
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-});
-
-// Helper function to run middleware
-function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: Function) {
-    return new Promise((resolve, reject) => {
-        fn(req, res, (result: any) => {
-            if (result instanceof Error) {
-                return reject(result);
-            }
-            return resolve(result);
-        });
-    });
-}
+import cors  from './middlware/cors';
+import { runMiddleware } from './middlware/runMiddleware';
 
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     try {
-        // Run CORS middleware manually
         await runMiddleware(req, res, cors);
-
-        // Handle preflight requests (OPTIONS)
-        if (req.method === 'OPTIONS') {
-            res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-            res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-            res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-            return res.status(200).end();
-        }
-
         const client = await connectToDatabase();
 
         if (req.method === 'POST') {
